@@ -92,7 +92,7 @@ var createHash = function(key, algorithm) {
  * @param {int} size サイズ  
  * @returns {String}  
  */  
-var randuid = function(size) {  
+exports.randuid = function(size) {  
     size = size || 32;  
     return crypto.randomBytes(Math.ceil(size * 3 / 4)).toString('base64').slice(0, size);  
 };  
