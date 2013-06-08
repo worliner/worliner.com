@@ -18,10 +18,6 @@ app.set('port', process.env.PORT || 3000);
 app.set('views', __dirname + '/views');
 app.set('view engine', 'jade');
 app.get('/:id', function(request, response){
-  request.setTimeout(10000, function(){
-    request.abort();
-    console.log("timeout");
-  });
   var requrl = url.parse(request.params.id).pathname;
   scrape.getWebData("http://" + requrl, function(data){
     //if(data.favicon_uri)
