@@ -1,29 +1,34 @@
 const API_KEY = 'ABQIAAAAKl1hv9gunT7c7fghyrO54xTfFarIsvho0mhMeiZmG-x8X50Gng';
-const HTML_TIMEOUT = 2000;
+const TIMEOUT = 2000;
 
+var reqCount = 0;
 var util    = require("util");
 var urlutil = require("url");
 var http    = require('http');
-var maxreq = 100;
-var counter = 0;
 var https   = require('https');
 var Iconv   = require("iconv").Iconv;
 var cheerio = require('cheerio');
+var hash = require('./hashgen');
 var fs = require('fs');
 var googleSafe = require('safe-browse');
 var charsetDetector = require("node-icu-charset-detector");
 var CharsetMatch = charsetDetector.CharsetMatch;
-
+var web = new Object();
 var reHead = new RegExp('<head[\\s>]([\\s\\S]*?)<\\/head>', 'i');
 var reCharset = new RegExp('<meta[^>]*[\\s;]+charset\\s*=\\s*["\']?([\\w\\-_]+)["\']?', 'i');
 var reDesc = new RegExp('<meta.*?name="description".*?content="(.*?)".*?>|<meta.*?content="(.*?)".*?name="description".*?>', 'i');
 
-var getWebPageTitle = function(url, callback) {
-	var web = new Object();
+function getMetaData(url, callback) {
+	
   	var urlElements = urlutil.parse(url, false);
   	web.url = url;
   	web.favicon_url = util.format("http://%s/favicon.ico", urlElements.host);
-  	console.log(web.favicon_url);
+
+  	//getFaviconURI(web, function(web, callback){
+	//	isFinishGetIsSafety = true;
+	//	validateWebData(web, callback);
+  	//});
+
   	var requester = (urlElements.protocol === 'https:') ? https : http;
 	var options = {
 		host: urlElements.hostname,
@@ -56,32 +61,26 @@ var getWebPageTitle = function(url, callback) {
 					web.description = text.match(reDesc)[1];
 				web.charset = charsetMatch.getName();
 			}
-			//console.log("FInish Scraping");
-			console.log("FInish Scraping:" + web.url);
+			//getIsSafety(web,callback);
+			web.shorten_url = hash.randuid(5);
 			callback(web);
-				//callback(web);
-			//}
-			//else 
-			//{
-			//	callback(web);
-			//}
 		});
 	});
 
-		request.setTimeout(2000, function() {
+		request.setTimeout(5000, function() {
 			console.log("REQUEST TIMEOUT:getWebPageTitle:" + web.url);
 			request.end();
+			callback(web);
 		});
 
 		request.on('error', function(error) {
 			console.log("REQUEST ERROR:getWebPageTitle:" + error + web.url);
 			request.end();
-			//callback(util.format("couldn't fetch web page from %s", url));
-			
+			callback(web);
 		});
 	};
 
-function reqGoogleSafeBrowseAPI(web, callback){
+function getIsSafety(web, callback){
 	var api = new googleSafe.Api(API_KEY);
 	api.lookup(web.url)
 	.on('success', function(){
@@ -94,12 +93,11 @@ function reqGoogleSafeBrowseAPI(web, callback){
 	});
 }
 
-function reqFaviconURI(web, callback){
+function getFaviconURI(web, callback){
 	var fav = require('./favicon');
-	fav.loadBase64Image(web.favicon_uri, function(uri){
+	fav.loadBase64Image(web.favicon_url, function(uri){
 		web.favicon_uri = uri;
 		callback(web);
-		//if(callback) callback(web)
 	})
 }
 
@@ -112,13 +110,42 @@ var bufferToString = function(buffer, charset) {
   }
 };
 
+var isFinishGetMetaData = false;
+var isFinishGetIsSafety = false;
+var isFinishGetFaviconURI = false;
+
 exports.getWebData = function (url, opt_callback){
-	getWebPageTitle(url, function(web) {
-		//var fav = require('./favicon');
-		//fav.loadBase64Image(web.favicon_url, function(uri){
-		//	web.favicon_uri = uri;
-		opt_callback(web);
+	reqCount += 1;
+	web = new Object();
+  	var urlElements = urlutil.parse(url, false);
+  	web.url = url;
+  	web.favicon_url = util.format("http://%s/favicon.ico", urlElements.host);
+
+	isFinishGetMetaData = false;
+	isFinishGetIsSafety = false;
+	isFinishGetFaviconURI = false;
+
+	getMetaData(url, function(web, callback){
+		isFinishGetMetaData = true;
+		validateWebData(web, opt_callback);
 	});
-	
+
+	getIsSafety(web, function(web, callback){
+		isFinishGetIsSafety = true;
+		validateWebData(web, opt_callback);
+	});
+
+	getFaviconURI(web, function(web, callback){
+		isFinishGetFaviconURI = true;
+		validateWebData(web, opt_callback);
+	});
+
+	console.log(reqCount);
 };
+
+function validateWebData(web, opt_callback){
+	if(isFinishGetMetaData && isFinishGetMetaData && isFinishGetFaviconURI)
+		opt_callback(web);
+}
+
 
