@@ -26,7 +26,7 @@ app.get('/:id', function(request, response){
   scrape.getWebData("http://" + requrl, function(data){
     //if(data.favicon_uri)
     //    data.favicon_uri = data.favicon_uri.substring(0, 50) + "...";
-    response.send("\n--------------------REQUEST:" + requrl + " RESPONSE--------------------\nURL:" + data.url + "\nHASH:" + data.shorten_url + "\nTitle:" + data.title + "\nDescription:" + data.description + "\nCharset:" + data.charset + "\nIsSafe:" + data.isSafe + "\nFaviconURILength:" + data.favicon_uri + "\n");
+    response.send("\n--------------------REQUEST:" + requrl + " RESPONSE--------------------\nURL:" + data.url + "\nHASH:" + data.shorten_url + "\nTitle:" + data.title + "\nBody:" + data.body + "\nDescription:" + data.description + "\nCharset:" + data.charset + "\nIsSafe:" + data.isSafe + "\nFaviconURILength:" + data.favicon_uri + "\n");
     console.log("responsed:" + data.url);
   });
 });
